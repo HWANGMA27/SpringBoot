@@ -18,7 +18,7 @@ public class Order {
     @Column(name = "order_id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
 
@@ -26,7 +26,7 @@ public class Order {
     private List<OrderItem> orderItemList = new ArrayList<>();
 
     // order를 통해 delivery를 접근할 가능성이 높다는 가정하에 연관관계의 주인을 order의 delivery로 설정
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_id")
     private Delivery delivery;
 
