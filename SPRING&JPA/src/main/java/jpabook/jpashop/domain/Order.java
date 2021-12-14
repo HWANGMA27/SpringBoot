@@ -76,7 +76,7 @@ public class Order {
             throw new IllegalStateException("이미 배송된 상품으로 취소가 불가능합니다.");
         }
 
-        this.setStatus(OrderStatus.CANCLE);
+        this.setStatus(OrderStatus.CANCEL);
         for(OrderItem orderItem : orderItems){
             orderItem.cancel();
         }
