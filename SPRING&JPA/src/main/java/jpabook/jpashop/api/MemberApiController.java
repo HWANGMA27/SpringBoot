@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController //resppnseBody + controller
 @RequiredArgsConstructor
@@ -17,6 +19,35 @@ public class MemberApiController {
     
     private final MemberService memberService;
 
+    //array자체를 바로 반환하면 api스펙의 확장성이 떨어진다.
+    @GetMapping("/api/v1/members")
+    public List<Member> memberV1(){
+        return memberService.findMembers();
+    }
+
+    @GetMapping("/api/v2/members")
+    public Result memberVs(){
+        List<Member> findMembers = memberService.findMembers();
+        int count = findMembers.size();
+        List<MemberDTO> collect = findMembers.stream()
+                .map(m -> new MemberDTO(m.getId(), m.getName()))
+                .collect(Collectors.toList());
+        return new Result(collect, count);
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class Result<T>{
+        private T data;
+        private int count;
+    }
+
+    @Data
+    @AllArgsConstructor
+    static class MemberDTO{
+        private Long id;
+        private String name;
+    }
     @PostMapping("/api/v1/members")
     public CreateMemberResponse saveMemberV1(@RequestBody @Valid Member member){
         //json데이터를 member형태로 변환
