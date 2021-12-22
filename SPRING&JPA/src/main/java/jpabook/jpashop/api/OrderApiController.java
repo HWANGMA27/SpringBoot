@@ -44,6 +44,18 @@ public class OrderApiController {
         return collect;
     }
 
+    /**
+     * fetch 조인 적용
+     * 문제 1. order:items = 1:4 이기 때문에 데이터가 뻥튀기된다.
+     * 문제 2. 페이징 적용이 불가능 -> 메모리에 올려서 페이징 처리를 하는데 데이터가 많을 경우 메모리 Over됨
+     */
+    @GetMapping("/api/v3/orders")
+    public List<OrderDTO> ordersV3(){
+        List<Order> all = orderRepository.findAllWithItem();
+        List<OrderDTO> collect = all.stream().map(order -> new OrderDTO(order)).collect(Collectors.toList());
+        return collect;
+    }
+
     @Data
     static class OrderDTO {
 
