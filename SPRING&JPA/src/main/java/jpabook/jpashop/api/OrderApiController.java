@@ -6,6 +6,8 @@ import jpabook.jpashop.domain.OrderItem;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import jpabook.jpashop.repository.order.query.OrderQueryDTO;
+import jpabook.jpashop.repository.order.query.OrderQueryRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.weaver.ast.Or;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 public class OrderApiController {
 
     private final OrderRepository orderRepository;
+    private final OrderQueryRepository orderQueryRepository;
 
     //Entity를 바로 반환하는 안좋은 예제1
     @GetMapping("/api/v1/orders")
@@ -71,6 +74,12 @@ public class OrderApiController {
         List<OrderDTO> collect = all.stream().map(order -> new OrderDTO(order)).collect(Collectors.toList());
         return collect;
     }
+
+    @GetMapping("/api/v4/orders")
+    public List<OrderQueryDTO> ordersV4(){
+        return orderQueryRepository.findOrderQueryDTOs();
+    }
+
     @Data
     static class OrderDTO {
 
