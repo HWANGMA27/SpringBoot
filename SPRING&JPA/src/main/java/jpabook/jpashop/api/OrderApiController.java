@@ -75,9 +75,22 @@ public class OrderApiController {
         return collect;
     }
 
+    /**
+     * DTO로 바로 반환받는 방법
+     * 문제 : orderId로 item을 조회함으로 N+1문제는 여전
+     */
     @GetMapping("/api/v4/orders")
     public List<OrderQueryDTO> ordersV4(){
         return orderQueryRepository.findOrderQueryDTOs();
+    }
+
+    /**
+     * 버전 4에서 리팩토링
+     * orderId를 = 이 아닌 in으로 한번에 조회해서 메모리에서 orderId로 item을 조회
+     */
+    @GetMapping("/api/v5/orders")
+    public List<OrderQueryDTO> ordersV5(){
+        return orderQueryRepository.findAllByDTO_Optimization();
     }
 
     @Data
