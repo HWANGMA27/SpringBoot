@@ -1,26 +1,21 @@
 package jpabook.jpashop.api;
 
-import jpabook.jpashop.domain.Address;
 import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderItem;
-import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
 import jpabook.jpashop.repository.order.query.OrderFlatDTO;
 import jpabook.jpashop.repository.order.query.OrderItemQueryDTO;
 import jpabook.jpashop.repository.order.query.OrderQueryDTO;
 import jpabook.jpashop.repository.order.query.OrderQueryRepository;
-import lombok.Data;
+import jpabook.jpashop.service.query.OrderDTO;
+import jpabook.jpashop.service.query.OrderQueryService;
 import lombok.RequiredArgsConstructor;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
 
@@ -28,28 +23,19 @@ import static java.util.stream.Collectors.*;
 @RequiredArgsConstructor
 public class OrderApiController {
 
-    private final OrderRepository orderRepository;
+    private final OrderQueryService orderQueryService;
     private final OrderQueryRepository orderQueryRepository;
 
     //Entity를 바로 반환하는 안좋은 예제1
     @GetMapping("/api/v1/orders")
     public List<Order> ordersV1(){
-        List<Order> all = orderRepository.findAllByCriteria(new OrderSearch());
-        for (Order order : all) {
-            order.getMember().getName();
-            order.getDelivery().getAddress();
-            List<OrderItem> orderItems = order.getOrderItems();
-            orderItems.stream().forEach(o -> o.getItem().getName());
-        }
-        return all;
+        return orderQueryService.ordersV1();
     }
 
     //LazyLoading으로 인해 N+1 문제가 발생하는 예제
     @GetMapping("/api/v2/orders")
     public List<OrderDTO> ordersV2(){
-        List<Order> orders = orderRepository.findAllByCriteria(new OrderSearch());
-        List<OrderDTO> collect = orders.stream().map(order -> new OrderDTO(order)).collect(toList());
-        return collect;
+       return orderQueryService.ordersV2();
     }
 
     /**
@@ -59,9 +45,7 @@ public class OrderApiController {
      */
     @GetMapping("/api/v3/orders")
     public List<OrderDTO> ordersV3(){
-        List<Order> all = orderRepository.findAllWithItem();
-        List<OrderDTO> collect = all.stream().map(order -> new OrderDTO(order)).collect(toList());
-        return collect;
+        return orderQueryService.ordersV3();
     }
 
     /**
@@ -74,9 +58,7 @@ public class OrderApiController {
     @GetMapping("/api/v3.1/orders")
     public List<OrderDTO> ordersV3_page(@RequestParam(value = "offset", defaultValue = "0") int offset,
                                         @RequestParam(value = "limit", defaultValue = "100") int limit){
-        List<Order> all = orderRepository.findAllWithMemberDelivery(offset, limit);
-        List<OrderDTO> collect = all.stream().map(order -> new OrderDTO(order)).collect(toList());
-        return collect;
+        return orderQueryService.ordersV3_page(offset, limit);
     }
 
     /**
@@ -97,6 +79,11 @@ public class OrderApiController {
         return orderQueryRepository.findAllByDTO_Optimization();
     }
 
+    /**
+     * 1:1:다:다의 관계의 데이터가 뻥튀기 된채로 다 들어있는 flatDTO를 생성
+     * 일단 뻥튀기 된 상태로 select해온 뒤
+     * OrderId로 grouping을 손수 해서 Loop를 돌리는 방식
+     */
     @GetMapping("/api/v6/orders")
     public List<OrderQueryDTO> ordersV6(){
         
@@ -111,42 +98,5 @@ public class OrderApiController {
                 .map(e -> new OrderQueryDTO(e.getKey().getOrderId(),
                         e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(),   e.getKey().getAddress(), e.getValue()))
                 .collect(toList());
-    }
-
-    @Data
-    static class OrderDTO {
-
-        private Long orderId;
-        private String name;
-        private LocalDateTime orderDate;
-        private OrderStatus orderStatus;
-        private Address address;
-        private List<OrderItemDTO> orderItems;
-
-        public OrderDTO(Order order){
-            orderId = order.getId();
-            name = order.getMember().getName();
-            orderDate = order.getOrderDate();
-            orderStatus = order.getStatus();
-            address = order.getMember().getAddress();
-            orderItems = order.getOrderItems()
-                    .stream()
-                    .map(orderItem -> new OrderItemDTO(orderItem))
-                    .collect(toList());
-        }
-
-    }
-
-    @Data
-    static class OrderItemDTO{
-        private String itemName;
-        private int orderPrice;
-        private int count;
-
-        public OrderItemDTO(OrderItem orderItem) {
-            itemName = orderItem.getItem().getName();
-            orderPrice = orderItem.getOrderPrice();
-            count = orderItem.getCount();
-        }
     }
 }
