@@ -6,6 +6,8 @@ import jpabook.jpashop.domain.OrderItem;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import jpabook.jpashop.repository.order.query.OrderFlatDTO;
+import jpabook.jpashop.repository.order.query.OrderItemQueryDTO;
 import jpabook.jpashop.repository.order.query.OrderQueryDTO;
 import jpabook.jpashop.repository.order.query.OrderQueryRepository;
 import lombok.Data;
@@ -19,6 +21,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,7 +48,7 @@ public class OrderApiController {
     @GetMapping("/api/v2/orders")
     public List<OrderDTO> ordersV2(){
         List<Order> orders = orderRepository.findAllByCriteria(new OrderSearch());
-        List<OrderDTO> collect = orders.stream().map(order -> new OrderDTO(order)).collect(Collectors.toList());
+        List<OrderDTO> collect = orders.stream().map(order -> new OrderDTO(order)).collect(toList());
         return collect;
     }
 
@@ -56,7 +60,7 @@ public class OrderApiController {
     @GetMapping("/api/v3/orders")
     public List<OrderDTO> ordersV3(){
         List<Order> all = orderRepository.findAllWithItem();
-        List<OrderDTO> collect = all.stream().map(order -> new OrderDTO(order)).collect(Collectors.toList());
+        List<OrderDTO> collect = all.stream().map(order -> new OrderDTO(order)).collect(toList());
         return collect;
     }
 
@@ -71,7 +75,7 @@ public class OrderApiController {
     public List<OrderDTO> ordersV3_page(@RequestParam(value = "offset", defaultValue = "0") int offset,
                                         @RequestParam(value = "limit", defaultValue = "100") int limit){
         List<Order> all = orderRepository.findAllWithMemberDelivery(offset, limit);
-        List<OrderDTO> collect = all.stream().map(order -> new OrderDTO(order)).collect(Collectors.toList());
+        List<OrderDTO> collect = all.stream().map(order -> new OrderDTO(order)).collect(toList());
         return collect;
     }
 
@@ -93,6 +97,22 @@ public class OrderApiController {
         return orderQueryRepository.findAllByDTO_Optimization();
     }
 
+    @GetMapping("/api/v6/orders")
+    public List<OrderQueryDTO> ordersV6(){
+        
+        List<OrderFlatDTO> flats = orderQueryRepository.findAllByDTO_flat();
+
+        return flats.stream()
+                .collect(groupingBy(o -> new OrderQueryDTO(o.getOrderId(),
+                                o.getName(), o.getOrderDate(), o.getOrderStatus(), o.getAddress()),
+                        mapping(o -> new OrderItemQueryDTO(o.getOrderId(),
+                                o.getItemName(), o.getOrderPrice(), o.getCount()), toList())
+                )).entrySet().stream()
+                .map(e -> new OrderQueryDTO(e.getKey().getOrderId(),
+                        e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(),   e.getKey().getAddress(), e.getValue()))
+                .collect(toList());
+    }
+
     @Data
     static class OrderDTO {
 
@@ -112,7 +132,7 @@ public class OrderApiController {
             orderItems = order.getOrderItems()
                     .stream()
                     .map(orderItem -> new OrderItemDTO(orderItem))
-                    .collect(Collectors.toList());
+                    .collect(toList());
         }
 
     }
