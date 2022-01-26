@@ -18,5 +18,3 @@
 ![ERD](https://user-images.githubusercontent.com/79449735/145665866-c1f17131-377e-428b-af7e-5fa093ed0ca3.png)
 
 티스토리 : https://dvpdvp.tistory.com/
-
-Trello : https://trello.com/b/ldNEfeTI/daily-tasks-planner
